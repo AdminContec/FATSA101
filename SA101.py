@@ -1,48 +1,32 @@
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 
-# Configuração inicial da página
-st.set_page_config(
-    page_title="Análise de Dados",
-    page_icon="📊",
-    layout="wide"
-)
+# Título do app
+st.title("Dashboard Interativo - Dados de matr020_100425")
 
-# Título do aplicativo
-st.title("📊 Análise de Dados CSV")
+# Carregar dados
+df = pd.read_csv("matr020_100425.csv")
 
-# Upload do arquivo
-uploaded_file = st.file_uploader("Carregue seu arquivo CSV", type=["csv"])
+st.subheader("Prévia dos dados")
+st.dataframe(df)
 
-if uploaded_file is not None:
-    try:
-        # Lendo o arquivo CSV
-        df = pd.read_csv(uploaded_file)
-        
-        # Mostrando informações básicas
-        st.success("Arquivo carregado com sucesso!")
-        
-        # Abas
-        tab1, tab2, tab3 = st.tabs(["Dados", "Estatísticas", "Visualização"])
-        
-        with tab1:
-            st.subheader("Visualização dos Dados")
-            st.dataframe(df)
-            
-        with tab2:
-            st.subheader("Estatísticas Descritivas")
-            st.write(df.describe())
-            
-        with tab3:
-            st.subheader("Visualização Gráfica")
-            column = st.selectbox("Selecione uma coluna para visualizar", df.columns)
-            
-            if pd.api.types.is_numeric_dtype(df[column]):
-                st.bar_chart(df[column])
-            else:
-                st.write("Selecione uma coluna numérica para visualização gráfica.")
-                
-    except Exception as e:
-        st.error(f"Ocorreu um erro ao ler o arquivo: {e}")
-else:
-    st.info("Por favor, carregue um arquivo CSV para começar.")
+# Filtros interativos
+st.sidebar.header("Filtros")
+coluna_filtro = st.sidebar.selectbox("Escolha uma coluna para filtrar:", df.columns)
+valores_unicos = df[coluna_filtro].dropna().unique()
+valores_filtrados = st.sidebar.multiselect("Valores:", valores_unicos, default=valores_unicos)
+
+# Aplicar filtro
+df_filtrado = df[df[coluna_filtro].isin(valores_filtrados)]
+
+st.subheader("Tabela Dinâmica com Filtro")
+st.dataframe(df_filtrado)
+
+# Gráfico
+st.subheader("Gráfico")
+coluna_x = st.selectbox("Eixo X:", df.columns)
+coluna_y = st.selectbox("Eixo Y:", df.columns)
+
+fig = px.bar(df_filtrado, x=coluna_x, y=coluna_y)
+st.plotly_chart(fig)
